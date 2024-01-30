@@ -13,6 +13,7 @@ module.exports = {
   getAllProduct: async (req, res) => {
     try {
       const products = await Product.find().sort({ createdAt: -1 });
+      console.log(123);
       res.status(200).json(products);
     } catch (error) {
       res.status(500).json("failed to get products");
@@ -23,7 +24,7 @@ module.exports = {
       const product = await Product.findById(req.params.id);
       res.status(200).json(product);
     } catch (error) {
-      res.status(500).json("failed to get the product");
+      res.status(500).json("failed to get the product1");
     }
   },
   searchProduct: async (req, res) => {
@@ -41,10 +42,12 @@ module.exports = {
           },
         },
       ]);
-      console.log("result", result);
-      res.status(200).json(result);
+
+      res.status(200).json({ data: result });
     } catch (error) {
-      res.status(500).json("failed to get the product");
+      res.status(500).json("failed to search the product");
+    } finally {
+      console.log("end");
     }
   },
 };
