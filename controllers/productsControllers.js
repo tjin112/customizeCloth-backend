@@ -11,10 +11,29 @@ module.exports = {
     }
   },
   getAllProduct: async (req, res) => {
+    console.log(req.query);
     try {
-      const products = await Product.find().sort({ createdAt: -1 });
-      console.log(123);
-      res.status(200).json(products);
+      // const products = await Product.find({
+      //   pid: req.query.pid,
+      //   cid: req.query.cid,
+      // }).sort({ createdAt: -1 });
+
+      if (req.query.pid && req.query.cid) {
+        const products = await Product.find({
+          pid: req.query.pid,
+          cid: req.query.cid,
+        }).sort({ createdAt: -1 });
+        return res.status(200).json(products);
+      } else if (req.query.pid && !req.query.cid) {
+        const products = await Product.find({
+          pid: req.query.pid,
+        }).sort({ createdAt: -1 });
+        return res.status(200).json(products);
+      } else {
+        const products = await Product.find().sort({ createdAt: -1 });
+        return res.status(200).json(products);
+      }
+      // console.log("products", products);
     } catch (error) {
       res.status(500).json("failed to get products");
     }

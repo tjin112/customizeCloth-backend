@@ -2,38 +2,79 @@ const Product = require("../models/Product");
 const Cart = require("../models/Cart");
 module.exports = {
   addToCart: async (req, res) => {
-    const { userId, cartItem, quantity } = req.body;
+    const { userId, cartItem, quantity, attr, details } = req.body;
+    const product = await Product.findOne({ _id: cartItem }); // 假设 Product 模型中有一个名为 cartItem 的字段
+    const productPrice = product ? product.price : 0; // 如果找不到对应的产品，则价格为0
+
     try {
       const cart = await Cart.findOne({ userId });
       // if cart already exist, add quantity
       if (cart) {
-        const existingProduct = cart.products.find(
+        const existingProducts = cart.products.filter(
           (product) => product.cartItem.toString() === cartItem
         );
-        if (existingProduct) {
-          existingProduct.quantity += 1;
+        if (existingProducts.length > 0) {
+          let productFound = false;
+          for (const existingProduct of existingProducts) {
+            // Check if the existing product has the same attributes and details
+            if (
+              existingProduct.attr === attr &&
+              JSON.stringify(existingProduct.details) ===
+                JSON.stringify(details)
+            ) {
+              existingProduct.quantity += 1;
+              productFound = true;
+              break;
+            }
+          }
+          if (!productFound) {
+            // If attributes or details are different, add it as a new item
+            cart.products.push({
+              cartItem,
+              quantity,
+              attr,
+              details,
+            });
+          }
         } else {
           cart.products.push({
             cartItem,
             quantity,
+            attr,
+            details,
           });
         }
         await cart.save();
-        res.status(200).json({ messagee: "Successfully added to cart" });
+        // Calculate total price
+        let totalPrice = 0;
+        for (const product of cart.products) {
+          // Assuming each product has a "quantity" property
+          totalPrice += product.quantity * productPrice; // 使用产品的价格计算总价
+        }
+
+        // Update cart total price
+        totalPrice = totalPrice.toFixed(2);
+        cart.totalPrice = totalPrice;
+        console.log("totalPrice", totalPrice, productPrice);
+        await cart.save();
+        res.status(200).json({ message: "Successfully added to cart" });
       }
       //   if cart not exist, create new cart for user
       else {
         const newCart = new Cart({
           userId,
-          products: [{ cartItem, quantity: quantity }],
+          products: [{ cartItem, quantity: quantity, attr, details }],
+          totalPrice: (quantity * productPrice).toFixed(2), // 使用产品的价格计算总价
         });
         await newCart.save();
-        res.status(200).json({ messagee: "Successfully added to cart" });
+
+        res.status(200).json({ message: "Successfully added to cart" });
       }
     } catch (error) {
-      res.status(500).json({ messagee: error });
+      res.status(500).json({ message: error });
     }
   },
+
   getCart: async (req, res) => {
     const userId = req.params.id;
 

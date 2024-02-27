@@ -12,8 +12,20 @@ const CartSchema = new mongoose.Schema(
           type: Number,
           default: 1,
         },
+        attr: {
+          type: String,
+          require: true,
+        },
+        details: {
+          type: Object,
+          require: true,
+        },
       },
     ],
+    totalPrice: {
+      type: Number,
+      default: 0, // 默认值为0
+    },
   },
   { timestamps: true }
 );
